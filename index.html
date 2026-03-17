@@ -508,7 +508,8 @@
         
         <div style="text-align: center; margin-bottom: 15px;">
             <input type="password" id="githubToken" placeholder="输入GitHub Token" style="padding: 8px; width: 200px; margin-right: 10px;">
-            <button onclick="syncCloud()">云端同步</button>
+            <button onclick="saveToCloud()" style="margin-right: 10px;">保存到云端</button>
+            <button onclick="loadFromCloud()">从云端下载</button>
         </div>
         
         <div class="module">
@@ -739,40 +740,11 @@
             return localStorage.getItem(GITHUB_TOKEN_KEY) || '';
         }
 
-        async function syncCloud() {
+        async function saveToCloud() {
             const token = getGithubToken();
             if (!token) {
                 alert('请先输入GitHub Token');
                 return;
-            }
-            
-            const gistId = localStorage.getItem(GIST_ID_KEY);
-            
-            if (gistId) {
-                try {
-                    const response = await fetch('https://api.github.com/gists/' + gistId, {
-                        headers: { 'Authorization': 'token ' + token }
-                    });
-                    
-                    if (response.ok) {
-                        const result = await response.json();
-                        const cloudData = JSON.parse(result.files['3dprint_data.json'].content);
-                        
-                        if (cloudData.products) localStorage.setItem('products', JSON.stringify(cloudData.products));
-                        if (cloudData.materials) localStorage.setItem('materials', JSON.stringify(cloudData.materials));
-                        if (cloudData.printers) localStorage.setItem('printers', JSON.stringify(cloudData.printers));
-                        if (cloudData.orderHistory) localStorage.setItem('orderHistory', JSON.stringify(cloudData.orderHistory));
-                        if (cloudData.doubanQuantity !== undefined) localStorage.setItem('doubanQuantity', cloudData.doubanQuantity);
-                        if (cloudData.doubanCost !== undefined) localStorage.setItem('doubanCost', cloudData.doubanCost);
-                        if (cloudData.doubanPrice !== undefined) localStorage.setItem('doubanPrice', cloudData.doubanPrice);
-                        if (cloudData.electricityPrice !== undefined) localStorage.setItem('electricityPrice', cloudData.electricityPrice);
-                        if (cloudData.packagingCost !== undefined) localStorage.setItem('packagingCost', cloudData.packagingCost);
-                        
-                        location.reload();
-                        alert('从云端同步成功！');
-                        return;
-                    }
-                } catch (err) {}
             }
             
             const data = {
@@ -793,9 +765,19 @@
                 files: { '3dprint_data.json': { content: JSON.stringify(data) } }
             };
             
+            const existingGistId = localStorage.getItem(GIST_ID_KEY);
+            
             try {
-                const response = await fetch('https://api.github.com/gists', {
-                    method: 'POST',
+                let url = 'https://api.github.com/gists';
+                let method = 'POST';
+                
+                if (existingGistId) {
+                    url += '/' + existingGistId;
+                    method = 'PATCH';
+                }
+                
+                const response = await fetch(url, {
+                    method: method,
                     headers: {
                         'Authorization': 'token ' + token,
                         'Content-Type': 'application/json'
@@ -809,7 +791,47 @@
                 localStorage.setItem(GIST_ID_KEY, result.id);
                 alert('保存到云端成功！');
             } catch (err) {
-                alert('同步失败：' + err.message);
+                alert('保存失败：' + err.message);
+            }
+        }
+
+        async function loadFromCloud() {
+            const token = getGithubToken();
+            if (!token) {
+                alert('请先输入GitHub Token');
+                return;
+            }
+            
+            const gistId = localStorage.getItem(GIST_ID_KEY);
+            if (!gistId) {
+                alert('云端没有保存过数据，请先保存到云端');
+                return;
+            }
+            
+            try {
+                const response = await fetch('https://api.github.com/gists/' + gistId, {
+                    headers: { 'Authorization': 'token ' + token }
+                });
+                
+                if (!response.ok) throw new Error('加载失败');
+                
+                const result = await response.json();
+                const cloudData = JSON.parse(result.files['3dprint_data.json'].content);
+                
+                if (cloudData.products) localStorage.setItem('products', JSON.stringify(cloudData.products));
+                if (cloudData.materials) localStorage.setItem('materials', JSON.stringify(cloudData.materials));
+                if (cloudData.printers) localStorage.setItem('printers', JSON.stringify(cloudData.printers));
+                if (cloudData.orderHistory) localStorage.setItem('orderHistory', JSON.stringify(cloudData.orderHistory));
+                if (cloudData.doubanQuantity !== undefined) localStorage.setItem('doubanQuantity', cloudData.doubanQuantity);
+                if (cloudData.doubanCost !== undefined) localStorage.setItem('doubanCost', cloudData.doubanCost);
+                if (cloudData.doubanPrice !== undefined) localStorage.setItem('doubanPrice', cloudData.doubanPrice);
+                if (cloudData.electricityPrice !== undefined) localStorage.setItem('electricityPrice', cloudData.electricityPrice);
+                if (cloudData.packagingCost !== undefined) localStorage.setItem('packagingCost', cloudData.packagingCost);
+                
+                location.reload();
+                alert('从云端下载成功！');
+            } catch (err) {
+                alert('加载失败：' + err.message);
             }
         }
 
