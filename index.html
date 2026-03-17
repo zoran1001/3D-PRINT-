@@ -506,6 +506,12 @@
     <div class="container">
         <h1>3D打印业务管理系统</h1>
         
+        <div style="text-align: center; margin-bottom: 15px;">
+            <button onclick="exportData()" style="margin-right: 10px;">导出数据</button>
+            <button onclick="document.getElementById('importFile').click()">导入数据</button>
+            <input type="file" id="importFile" style="display:none" onchange="importData(this)">
+        </div>
+        
         <div class="module">
             <h2>打印商品</h2>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -720,6 +726,53 @@
 
         function getNumericValue(elementId) {
             return parseFloat(getElement(elementId).value) || 0;
+        }
+
+        function exportData() {
+            const data = {
+                products: JSON.parse(localStorage.getItem('products') || '[]'),
+                materials: JSON.parse(localStorage.getItem('materials') || '[]'),
+                printers: JSON.parse(localStorage.getItem('printers') || '[]'),
+                orderHistory: JSON.parse(localStorage.getItem('orderHistory') || '[]'),
+                doubanQuantity: localStorage.getItem('doubanQuantity') || 0,
+                doubanCost: localStorage.getItem('doubanCost') || 0,
+                doubanPrice: localStorage.getItem('doubanPrice') || 0,
+                electricityPrice: localStorage.getItem('electricityPrice') || 0,
+                packagingCost: localStorage.getItem('packagingCost') || 0
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '3dprint_data_' + new Date().toISOString().slice(0,10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            alert('数据导出成功！');
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.products) localStorage.setItem('products', JSON.stringify(data.products));
+                    if (data.materials) localStorage.setItem('materials', JSON.stringify(data.materials));
+                    if (data.printers) localStorage.setItem('printers', JSON.stringify(data.printers));
+                    if (data.orderHistory) localStorage.setItem('orderHistory', JSON.stringify(data.orderHistory));
+                    if (data.doubanQuantity !== undefined) localStorage.setItem('doubanQuantity', data.doubanQuantity);
+                    if (data.doubanCost !== undefined) localStorage.setItem('doubanCost', data.doubanCost);
+                    if (data.doubanPrice !== undefined) localStorage.setItem('doubanPrice', data.doubanPrice);
+                    if (data.electricityPrice !== undefined) localStorage.setItem('electricityPrice', data.electricityPrice);
+                    if (data.packagingCost !== undefined) localStorage.setItem('packagingCost', data.packagingCost);
+                    location.reload();
+                    alert('数据导入成功！');
+                } catch(err) {
+                    alert('导入失败，文件格式错误！');
+                }
+            };
+            reader.readAsText(file);
         }
 
         function saveToStorage(key, value) {
