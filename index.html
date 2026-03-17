@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D打印业务管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #343a40;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d5a27;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        h3 {
+            margin-bottom: 15px;
+            color: #495057;
+        }
+
+        .module {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 30px;
+        }
+        
+        .module:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .module h2 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid #2d5a27;
+            padding-bottom: 10px;
+        }
+
+        .module-cost h2 {
+            color: #007bff;
+            border-color: #007bff;
+        }
+        .module-order h2 {
+            color: #28a745;
+            border-color: #28a745;
+        }
+        .module-douban h2 {
+            color: #ffc107;
+            border-color: #ffc107;
+        }
+
+        .product-cards {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px;
+            background: #fff;
+            border-bottom: 2px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .product-card {
+            flex: 0 0 160px;
+            min-height: 120px;
+            background-color: #f0f8f0;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-card.selected {
+            background-color: #2d5a27;
+            color: white;
+            border: 2px solid #1a3a16;
+        }
+
+        .product-card.selected::after {
+            content: "✅";
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .product-checkbox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .product-name {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2d5a27;
+            box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
+        }
+
+        .material-row, .printer-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .material-row input, .printer-row input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .delete-btn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .delete-product-btn {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            padding: 5px 10px;
+        }
+
+        .add-btn {
+            background-color: #2d5a27;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        .add-btn:hover {
+            background-color: #1a3a16;
+        }
+
+        #selectedProductsSummary {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            min-height: 40px;
+            border: 1px solid #ddd;
+        }
+
+        .product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: #fff;
+            border-radius: 4px;
+            margin-bottom: 6px;
+        }
+        .product-item:last-child { margin-bottom:0; }
+        .qty-control { display:flex; align-items:center; gap:6px; }
+        .qty-btn { width:26px; height:26px; padding:0; border-radius:4px; font-weight:bold; }
+        .qty-num { min-width:30px; text-align:center; font-weight:bold; }
+
+        #selectedProductsSummary .no-products {
+            color: #999;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .delete-history-btn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .delete-history-btn:hover {
+            background-color: #cc0000;
+        }
+
+        button {
+            background-color: #2d5a27;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #1a3a16;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .history-table th, .history-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .history-table th {
+            background-color: #2d5a27;
+            color: white;
+        }
+
+        .history-table tr:nth-child(even) {
+            background-color: #f0f8f0;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
+            gap: 20px;
+        }
+
+        .total-profit {
+            font-size: 18px;
+            font-weight: bold;
+            color: #28a745;
+            margin: 15px 0;
+        }
+        
+        .expense-breakdown {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .expense-item.total {
+            font-weight: bold;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .expense-label {
+            color: #666;
+        }
+        
+        .expense-value {
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .history-table {
+                font-size: 0.8rem;
+            }
+            
+            .history-table th, .history-table td {
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>3D打印业务管理系统</h1>
+        
+        <div class="module">
+            <h2>打印商品</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <button class="add-btn" id="addProduct" type="button">新增商品</button>
+            </div>
+            <div class="product-cards" id="productCards"></div>
+        </div>
+
+        <div class="main-content">
+            <div class="module module-cost">
+                <h2>成本参数</h2>
+                <div class="form-group">
+                    <label for="packagingCost">打包材料成本</label>
+                    <input type="number" id="packagingCost" value="0" step="0.01" min="0">
+                </div>
+                
+                <h3>材料管理</h3>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                    <button class="add-btn" id="addMaterial" type="button">新增材料</button>
+                </div>
+                <div id="materialsList"></div>
+                
+                <h3>电费设置</h3>
+                <div class="form-group">
+                    <label for="electricityPrice">电费单价 (元/度)</label>
+                    <input type="number" id="electricityPrice" value="1.3" step="0.01" min="0">
+                </div>
+                
+                <h3>打印机配置</h3>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                    <button class="add-btn" id="addPrinter" type="button">添加新打印机</button>
+                </div>
+                <div id="printersList"></div>
+            </div>
+
+            <div class="module module-order">
+                <h2>账单售卖记录</h2>
+                <div class="form-group">
+                    <label for="buyerName">购买人</label>
+                    <input type="text" id="buyerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="buyerAddress">地址</label>
+                    <input type="text" id="buyerAddress">
+                </div>
+                <div class="form-group">
+                    <label for="shippingCost">运费</label>
+                    <input type="number" id="shippingCost" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="totalSalePrice">总实收售价</label>
+                    <input type="number" id="totalSalePrice" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>已选打印商品（点-+调整数量）</label>
+                    <div id="selectedProductsSummary"></div>
+                </div>
+                <div class="form-group">
+                    <label>总支出结构</label>
+                    <div id="expenseBreakdown" class="expense-breakdown"></div>
+                </div>
+                <div class="total-profit">
+                    总利润: <span id="totalProfit">0.00</span>
+                </div>
+                <button id="saveOrder" type="button">保存订单</button>
+            </div>
+
+            <div class="module module-douban">
+                <h2>豆板管理</h2>
+                <div class="form-group">
+                    <label for="doubanQuantity">豆板数量</label>
+                    <input type="number" id="doubanQuantity" value="0" step="1" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="doubanCost">豆板进价</label>
+                    <input type="number" id="doubanCost" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="doubanPrice">豆板卖价</label>
+                    <input type="number" id="doubanPrice" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label>豆板单价利润</label>
+                    <div id="doubanProfit">0.00</div>
+                </div>
+                <div class="form-group">
+                    <label>豆板总收益</label>
+                    <div id="doubanTotal">0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="module" style="margin-top: 20px;">
+            <h2>历史记录</h2>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>购买人</th>
+                        <th>地址</th>
+                        <th>总售价</th>
+                        <th>总支出</th>
+                        <th>运费</th>
+                        <th>豆板</th>
+                        <th>打印商品</th>
+                        <th>总利润</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <span id="totalExpense" style="display: none;">0.00</span>
+
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>商品详情</h2>
+            <div class="form-group">
+                <label for="modalProductName">产品名称</label>
+                <input type="text" id="modalProductName">
+            </div>
+            <div class="form-group">
+                <label for="modalMaterial">选择材料</label>
+                <select id="modalMaterial"></select>
+            </div>
+            <div class="form-group">
+                <label for="modalWeight">消耗克数 (g)</label>
+                <input type="number" id="modalWeight" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label for="modalPrinter">选择打印机</label>
+                <select id="modalPrinter"></select>
+            </div>
+            <div class="form-group">
+                <label for="modalPrintTime">打印耗时 (h)</label>
+                <input type="number" id="modalPrintTime" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label for="modalNeedleQuantity">针数量</label>
+                <input type="number" id="modalNeedleQuantity" step="0.01" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label for="modalNeedleUnitPrice">针价格 (元/个)</label>
+                <input type="number" id="modalNeedleUnitPrice" step="0.01" value="0" min="0">
+            </div>
+            <div class="form-group">
+                <label>总针价格</label>
+                <div id="modalTotalNeedlePrice" style="padding: 10px; background: #f5f5f5; border-radius: 4px;">0.00</div>
+            </div>
+            <div class="form-group">
+                <label for="modalOtherPrice">其他耗材价格</label>
+                <input type="number" id="modalOtherPrice" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label>单个成本</label>
+                <div id="modalTotalCost" style="padding: 10px; background: #f5f5f5; border-radius: 4px;">0.00</div>
+            </div>
+            <div class="form-group">
+                <label for="modalSalePrice">卖价</label>
+                <input type="number" id="modalSalePrice" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+                <label>单个利润</label>
+                <div id="modalProfit" style="padding: 10px; background: #f5f5f5; border-radius: 4px;">0.00</div>
+            </div>
+            <button id="saveProductChanges" type="button">保存修改</button>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            defaultElectricityPrice: 1.3,
+            defaultDoubanQuantity: 0,
+            defaultDoubanCost: 0,
+            defaultDoubanPrice: 0
+        };
+
+        const INITIAL_PRODUCTS = [
+            { name: '背如刺拼豆针笔', material: 'PLA 丝绸', printer: '小型打印机' },
+            { name: '美乐蒂单针豆笔', material: 'PLA 白色', printer: '小型打印机' },
+            { name: '圆润可爱星星双针', material: 'PLA 渐变色', printer: '中型打印机' },
+            { name: '星星豆勺', material: 'PLA 丝绸', printer: '小型打印机' },
+            { name: '长豆勺', material: 'PLA 白色', printer: '小型打印机' },
+            { name: '草莓豆勺', material: 'PLA 渐变色', printer: '小型打印机' }
+        ];
+
+        const INITIAL_MATERIALS = [
+            { name: 'PLA 丝绸', price: 0 },
+            { name: 'PLA 白色', price: 0 },
+            { name: 'PLA 渐变色', price: 0 }
+        ];
+
+        const INITIAL_PRINTERS = [
+            { name: '小型打印机', power: 0 },
+            { name: '中型打印机', power: 0 },
+            { name: '高速打印机', power: 0 }
+        ];
+
+        // 选中商品数量记录（全局）
+        let selectedQtyMap = {};
+
+        let state = {
+            currentEditingProductIndex: -1
+        };
+
+        function getElement(id) {
+            return document.getElementById(id);
+        }
+
+        function getNumericValue(elementId) {
+            return parseFloat(getElement(elementId).value) || 0;
+        }
+
+        function saveToStorage(key, value) {
+            localStorage.setItem(key, JSON.stringify(value));
+        }
+
+        function loadFromStorage(key, defaultValue) {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : defaultValue;
+        }
+
+        function getMaterials() {
+            return loadFromStorage('materials', INITIAL_MATERIALS);
+        }
+
+        function getPrinters() {
+            return loadFromStorage('printers', INITIAL_PRINTERS);
+        }
+
+        function getProducts() {
+            const saved = loadFromStorage('products', null);
+            if (saved) return saved;
+            const products = INITIAL_PRODUCTS.map(p => ({
+                ...p, cost: 0, printTime: 0, weight: 0, needleQuantity:0, needleUnitPrice:0, otherPrice:0, salePrice:0
+            }));
+            saveToStorage('products', products);
+            return products;
+        }
+
+        function saveProducts(products) {
+            saveToStorage('products', products);
+        }
+
+        function calculateCost(weight, material, printTime, printer, needleQuantity, needleUnitPrice, otherPrice) {
+            const materials = getMaterials();
+            const printers = getPrinters();
+            const electricityPrice = getNumericValue('electricityPrice');
+            
+            const materialPrice = materials.find(m => m.name === material)?.price || 0;
+            const printerPower = printers.find(p => p.name === printer)?.power || 0;
+            
+            const materialCost = (weight / 1000) * materialPrice;
+            const electricityUsed = (printerPower * printTime) / 1000;
+            const electricityCost = electricityUsed * electricityPrice;
+            const totalNeedlePrice = (needleQuantity || 0) * (needleUnitPrice || 0);
+            
+            return materialCost + electricityCost + totalNeedlePrice + (otherPrice || 0);
+        }
+
+        function initMaterialsList() {
+            const materials = getMaterials();
+            const container = getElement('materialsList');
+            container.innerHTML = '';
+            
+            materials.forEach((material, index) => {
+                const row = document.createElement('div');
+                row.className = 'material-row';
+                row.innerHTML = `
+                    <input type="text" value="${material.name}" class="material-name" data-index="${index}">
+                    <input type="number" value="${material.price}" class="material-price" step="0.01" min="0" data-index="${index}">
+                    <button class="delete-btn" type="button">删除</button>
+                `;
+                
+                row.querySelector('.delete-btn').addEventListener('click', () => deleteMaterial(index));
+                row.querySelector('.material-name').addEventListener('input', (e) => {
+                    materials[index].name = e.target.value;
+                    saveToStorage('materials', materials);
+                    updateMaterialDropdown();
+                    updateAllProductCosts();
+                });
+                row.querySelector('.material-price').addEventListener('input', (e) => {
+                    materials[index].price = parseFloat(e.target.value) || 0;
+                    saveToStorage('materials', materials);
+                    updateAllProductCosts();
+                });
+                
+                container.appendChild(row);
+            });
+        }
+
+        function initPrintersList() {
+            const printers = getPrinters();
+            const container = getElement('printersList');
+            container.innerHTML = '';
+            
+            printers.forEach((printer, index) => {
+                const row = document.createElement('div');
+                row.className = 'printer-row';
+                row.innerHTML = `
+                    <div style="flex:1">
+                        <label style="font-size:12px;color:#666;">打印机名称</label>
+                        <input type="text" value="${printer.name}" class="printer-name" data-index="${index}">
+                    </div>
+                    <div style="flex:1">
+                        <label style="font-size:12px;color:#666;">功率 (W)</label>
+                        <input type="number" value="${printer.power}" class="printer-power" step="1" min="0" data-index="${index}">
+                    </div>
+                    <button class="delete-btn" type="button">删除</button>
+                `;
+                
+                row.querySelector('.delete-btn').addEventListener('click', () => deletePrinter(index));
+                row.querySelector('.printer-name').addEventListener('input', (e) => {
+                    printers[index].name = e.target.value;
+                    saveToStorage('printers', printers);
+                    updatePrinterDropdown();
+                    updateAllProductCosts();
+                });
+                row.querySelector('.printer-power').addEventListener('input', (e) => {
+                    printers[index].power = parseFloat(e.target.value) || 0;
+                    saveToStorage('printers', printers);
+                    updateAllProductCosts();
+                });
+                
+                container.appendChild(row);
+            });
+        }
+
+        function updateMaterialDropdown() {
+            const materials = getMaterials();
+            const select = getElement('modalMaterial');
+            select.innerHTML = '';
+            materials.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.name;
+                opt.textContent = m.name;
+                select.appendChild(opt);
+            });
+        }
+
+        function updatePrinterDropdown() {
+            const printers = getPrinters();
+            const select = getElement('modalPrinter');
+            select.innerHTML = '';
+            printers.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.name;
+                opt.textContent = p.name;
+                select.appendChild(opt);
+            });
+        }
+
+        // 加载商品卡片（已去掉数量输入）
+        function loadProductCards() {
+            const products = getProducts();
+            const container = getElement('productCards');
+            container.innerHTML = '';
+            
+            products.forEach((product, index) => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.dataset.index = index;
+                
+                card.innerHTML = `
+                    <input type="checkbox" class="product-checkbox">
+                    <div class="product-name">${product.name}</div>
+                    <button class="delete-btn delete-product-btn" type="button">删除</button>
+                `;
+                
+                card.addEventListener('click', (e) => {
+                    if (!e.target.matches('input[type="checkbox"]') && !e.target.matches('.delete-product-btn')) {
+                        openProductModal(index);
+                    }
+                });
+                
+                const checkbox = card.querySelector('.product-checkbox');
+                checkbox.addEventListener('change', () => {
+                    card.classList.toggle('selected');
+                    const idx = parseInt(card.dataset.index);
+                    if(card.classList.contains('selected')){
+                        if(!selectedQtyMap[idx]) selectedQtyMap[idx] = 1;
+                    }else{
+                        delete selectedQtyMap[idx];
+                    }
+                    updateCalculations();
+                });
+                
+                card.querySelector('.delete-product-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteProduct(index);
+                });
+                
+                container.appendChild(card);
+            });
+        }
+
+        function loadHistory() {
+            const history = loadFromStorage('orderHistory', []);
+            const tableBody = getElement('historyTableBody');
+            tableBody.innerHTML = '';
+            
+            history.forEach((order, index) => {
+                const row = document.createElement('tr');
+                const productNames = order.products ? order.products.map(p => `${p.name}(${p.quantity})`).join(',') : '';
+                row.innerHTML = `
+                    <td>${order.time}</td>
+                    <td>${order.buyerName||''}</td>
+                    <td>${order.buyerAddress||''}</td>
+                    <td>${order.totalSalePrice?.toFixed(2)}</td>
+                    <td>${order.totalExpense?.toFixed(2)}</td>
+                    <td>${order.shippingCost?.toFixed(2)}</td>
+                    <td>${order.doubanQuantity||0}</td>
+                    <td>${productNames}</td>
+                    <td>${order.totalProfit?.toFixed(2)}</td>
+                    <td><button class="delete-history-btn" type="button">删除</button></td>
+                `;
+                row.querySelector('.delete-history-btn').addEventListener('click', () => deleteHistory(index));
+                tableBody.appendChild(row);
+            });
+        }
+
+        function openProductModal(index) {
+            const products = getProducts();
+            const p = products[index];
+            state.currentEditingProductIndex = index;
+            
+            getElement('modalProductName').value = p.name;
+            getElement('modalWeight').value = p.weight||0;
+            getElement('modalPrintTime').value = p.printTime||0;
+            getElement('modalNeedleQuantity').value = p.needleQuantity||0;
+            getElement('modalNeedleUnitPrice').value = p.needleUnitPrice||0;
+            getElement('modalOtherPrice').value = p.otherPrice||0;
+            getElement('modalSalePrice').value = p.salePrice||0;
+            getElement('modalMaterial').value = p.material;
+            getElement('modalPrinter').value = p.printer;
+            
+            calculateModalCost();
+            getElement('productModal').style.display = 'block';
+        }
+
+        function calculateModalCost() {
+            const weight = getNumericValue('modalWeight');
+            const printTime = getNumericValue('modalPrintTime');
+            const nq = getNumericValue('modalNeedleQuantity');
+            const np = getNumericValue('modalNeedleUnitPrice');
+            const other = getNumericValue('modalOtherPrice');
+            const material = getElement('modalMaterial').value;
+            const printer = getElement('modalPrinter').value;
+            
+            const totalNeedle = nq * np;
+            getElement('modalTotalNeedlePrice').textContent = totalNeedle.toFixed(2);
+            
+            const cost = calculateCost(weight,material,printTime,printer,nq,np,other);
+            getElement('modalTotalCost').textContent = cost.toFixed(2);
+            calculateModalProfit();
+        }
+
+        function calculateModalProfit() {
+            const sale = getNumericValue('modalSalePrice');
+            const cost = parseFloat(getElement('modalTotalCost').textContent)||0;
+            getElement('modalProfit').textContent = (sale-cost).toFixed(2);
+        }
+
+        function calculateDoubanProfit() {
+            const cost = getNumericValue('doubanCost');
+            const price = getNumericValue('doubanPrice');
+            const profit = price - cost;
+            getElement('doubanProfit').textContent = profit.toFixed(2);
+            calculateDoubanTotal();
+        }
+
+        function calculateDoubanTotal() {
+            const qty = getNumericValue('doubanQuantity');
+            const profit = parseFloat(getElement('doubanProfit').textContent)||0;
+            getElement('doubanTotal').textContent = (qty*profit).toFixed(2);
+        }
+
+        // 加减数量
+        function changeQty(index, change){
+            if(!selectedQtyMap[index]) selectedQtyMap[index] = 1;
+            selectedQtyMap[index] = Math.max(1, selectedQtyMap[index] + change);
+            updateCalculations();
+        }
+
+        // 渲染已选商品 + 加减按钮
+        function updateCalculations() {
+            const selectedCards = document.querySelectorAll('.product-card.selected');
+            const products = getProducts();
+            const summary = getElement('selectedProductsSummary');
+            summary.innerHTML = '';
+            let productCost = 0;
+
+            if(selectedCards.length === 0){
+                summary.innerHTML = '<div class="no-products">未选择任何打印商品</div>';
+            }else{
+                selectedCards.forEach(card=>{
+                    const idx = parseInt(card.dataset.index);
+                    const qty = selectedQtyMap[idx] || 1;
+                    const p = products[idx];
+                    const singleCost = p.cost || 0;
+                    const total = singleCost * qty;
+                    productCost += total;
+
+                    summary.innerHTML += `
+                        <div class="product-item" data-idx="${idx}">
+                            <span>${p.name}</span>
+                            <div class="qty-control">
+                                <button class="qty-btn" onclick="changeQty(${idx},-1)">-</button>
+                                <span class="qty-num">${qty}</span>
+                                <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
+                                <span style="margin-left:8px;">(${total.toFixed(2)})</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            const pack = getNumericValue('packagingCost');
+            const ship = getNumericValue('shippingCost');
+            const totalExpense = productCost + pack + ship;
+
+            getElement('expenseBreakdown').innerHTML = `
+                <div class="expense-item"><span class="expense-label">商品成本:</span><span class="expense-value">${productCost.toFixed(2)}</span></div>
+                <div class="expense-item"><span class="expense-label">打包费:</span><span class="expense-value">${pack.toFixed(2)}</span></div>
+                <div class="expense-item"><span class="expense-label">运费:</span><span class="expense-value">${ship.toFixed(2)}</span></div>
+                <div class="expense-item total"><span class="expense-label">总支出:</span><span class="expense-value">${totalExpense.toFixed(2)}</span></div>
+            `;
+
+            const sale = getNumericValue('totalSalePrice');
+            const douban = parseFloat(getElement('doubanTotal').textContent)||0;
+            const profit = (sale - totalExpense) + douban;
+            getElement('totalProfit').textContent = profit.toFixed(2);
+            getElement('totalExpense').textContent = totalExpense.toFixed(2);
+        }
+
+        function updateAllProductCosts() {
+            const products = getProducts();
+            products.forEach(p=>{
+                p.cost = calculateCost(p.weight,p.material,p.printTime,p.printer,p.needleQuantity,p.needleUnitPrice,p.otherPrice);
+            });
+            saveProducts(products);
+            loadProductCards();
+            updateCalculations();
+        }
+
+        function deleteProduct(idx){
+            if(confirm('确定删除该商品？')){
+                const p=getProducts();
+                p.splice(idx,1);
+                delete selectedQtyMap[idx];
+                saveProducts(p);
+                loadProductCards();
+                updateCalculations();
+            }
+        }
+        function deleteMaterial(idx){
+            if(confirm('确定删除该材料？')){
+                const m=getMaterials();
+                m.splice(idx,1);
+                saveToStorage('materials',m);
+                initMaterialsList();
+                updateMaterialDropdown();
+                updateAllProductCosts();
+            }
+        }
+        function deletePrinter(idx){
+            if(confirm('确定删除该打印机？')){
+                const p=getPrinters();
+                p.splice(idx,1);
+                saveToStorage('printers',p);
+                initPrintersList();
+                updatePrinterDropdown();
+                updateAllProductCosts();
+            }
+        }
+        function deleteHistory(idx){
+            if(confirm('确定删除该记录？')){
+                const h=loadFromStorage('orderHistory',[]);
+                h.splice(idx,1);
+                saveToStorage('orderHistory',h);
+                loadHistory();
+            }
+        }
+
+        function saveOrder() {
+            const selected = document.querySelectorAll('.product-card.selected');
+            const name = getElement('buyerName').value.trim();
+            if(!name){alert('请填写购买人');return;}
+
+            const products = getProducts();
+            const orderProducts = [];
+            selected.forEach(card=>{
+                const idx = parseInt(card.dataset.index);
+                const qty = selectedQtyMap[idx] || 1;
+                orderProducts.push({...products[idx], quantity:qty});
+            });
+
+            const order = {
+                time:new Date().toLocaleString(),
+                buyerName:name,
+                buyerAddress:getElement('buyerAddress').value,
+                shippingCost:getNumericValue('shippingCost'),
+                totalSalePrice:getNumericValue('totalSalePrice'),
+                totalExpense:parseFloat(getElement('totalExpense').textContent),
+                totalProfit:parseFloat(getElement('totalProfit').textContent),
+                doubanQuantity:getNumericValue('doubanQuantity'),
+                products:orderProducts
+            };
+
+            const history = loadFromStorage('orderHistory',[]);
+            history.push(order);
+            saveToStorage('orderHistory',history);
+
+            getElement('buyerName').value='';
+            getElement('buyerAddress').value='';
+            getElement('shippingCost').value='0';
+            getElement('totalSalePrice').value='0';
+            getElement('doubanQuantity').value='0';
+            selected.forEach(card=>{
+                card.querySelector('.product-checkbox').checked=false;
+                card.classList.remove('selected');
+            });
+            selectedQtyMap = {};
+            
+            loadHistory();
+            updateCalculations();
+            alert('订单保存成功！');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            getElement('doubanQuantity').value = localStorage.getItem('doubanQuantity')||0;
+            getElement('doubanCost').value = localStorage.getItem('doubanCost')||0;
+            getElement('doubanPrice').value = localStorage.getItem('doubanPrice')||0;
+
+            initMaterialsList();
+            initPrintersList();
+            loadProductCards();
+            loadHistory();
+            updateMaterialDropdown();
+            updatePrinterDropdown();
+            calculateDoubanProfit();
+            updateCalculations();
+
+            document.addEventListener('keydown', e=>{
+                if(e.key==='Escape') getElement('productModal').style.display='none';
+            });
+
+            getElement('addProduct').onclick=()=>{
+                const p=getProducts();
+                p.push({name:'新产品',material:getMaterials()[0]?.name,printer:getPrinters()[0]?.name,cost:0,printTime:0,weight:0,needleQuantity:0,needleUnitPrice:0,otherPrice:0,salePrice:0});
+                saveProducts(p);loadProductCards();openProductModal(p.length-1);
+            };
+
+            getElement('addMaterial').onclick=()=>{
+                const m=getMaterials();m.push({name:'新材料',price:0});saveToStorage('materials',m);initMaterialsList();updateMaterialDropdown();
+            };
+
+            getElement('addPrinter').onclick=()=>{
+                const p=getPrinters();p.push({name:'新打印机',power:0});saveToStorage('printers',p);initPrintersList();updatePrinterDropdown();
+            };
+
+            getElement('saveProductChanges').onclick=()=>{
+                if(state.currentEditingProductIndex===-1)return;
+                const p=getProducts();
+                const idx=state.currentEditingProductIndex;
+                p[idx].name=getElement('modalProductName').value;
+                p[idx].weight=getNumericValue('modalWeight');
+                p[idx].printTime=getNumericValue('modalPrintTime');
+                p[idx].needleQuantity=getNumericValue('modalNeedleQuantity');
+                p[idx].needleUnitPrice=getNumericValue('modalNeedleUnitPrice');
+                p[idx].otherPrice=getNumericValue('modalOtherPrice');
+                p[idx].salePrice=getNumericValue('modalSalePrice');
+                p[idx].material=getElement('modalMaterial').value;
+                p[idx].printer=getElement('modalPrinter').value;
+                p[idx].cost=parseFloat(getElement('modalTotalCost').textContent);
+                saveProducts(p);
+                getElement('productModal').style.display='none';
+                loadProductCards();updateCalculations();
+            };
+
+            document.querySelector('.close').onclick=()=>getElement('productModal').style.display='none';
+            window.onclick=(e)=>{if(e.target===getElement('productModal'))getElement('productModal').style.display='none';};
+
+            ['modalWeight','modalPrintTime','modalNeedleQuantity','modalNeedleUnitPrice','modalOtherPrice','modalMaterial','modalPrinter','modalSalePrice'].forEach(id=>{
+                getElement(id).addEventListener('input',calculateModalCost);
+            });
+
+            getElement('packagingCost').addEventListener('input',updateCalculations);
+            getElement('electricityPrice').addEventListener('input',updateAllProductCosts);
+            getElement('shippingCost').addEventListener('input',updateCalculations);
+            getElement('totalSalePrice').addEventListener('input',updateCalculations);
+            
+            ['doubanQuantity','doubanCost','doubanPrice'].forEach(id=>{
+                getElement(id).addEventListener('input',()=>{
+                    localStorage.setItem(id, getElement(id).value);
+                    calculateDoubanProfit();
+                    updateCalculations();
+                });
+            });
+
+            getElement('saveOrder').onclick=saveOrder;
+        });
+    </script>
+</body>
+</html>
