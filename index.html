@@ -1309,6 +1309,11 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            const savedToken = localStorage.getItem('3dprint_github_token');
+            if (savedToken) {
+                getElement('githubToken').value = savedToken;
+            }
+            
             getElement('doubanQuantity').value = localStorage.getItem('doubanQuantity')||0;
             getElement('doubanCost').value = localStorage.getItem('doubanCost')||0;
             getElement('doubanPrice').value = localStorage.getItem('doubanPrice')||0;
