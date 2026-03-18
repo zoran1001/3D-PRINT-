@@ -527,6 +527,18 @@
                     <label for="packagingCost">打包材料成本</label>
                     <input type="number" id="packagingCost" value="0" step="0.01" min="0">
                 </div>
+                <div class="form-group">
+                    <label for="boxCost">纸箱/泡沫箱</label>
+                    <input type="number" id="boxCost" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="bubbleCost">气泡膜/填充</label>
+                    <input type="number" id="bubbleCost" value="0" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="tapeCost">胶带</label>
+                    <input type="number" id="tapeCost" value="0" step="0.01" min="0">
+                </div>
                 
                 <h3>材料管理</h3>
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
@@ -756,7 +768,10 @@
                 doubanCost: localStorage.getItem('doubanCost') || 0,
                 doubanPrice: localStorage.getItem('doubanPrice') || 0,
                 electricityPrice: localStorage.getItem('electricityPrice') || 0,
-                packagingCost: localStorage.getItem('packagingCost') || 0
+                packagingCost: localStorage.getItem('packagingCost') || 0,
+                boxCost: localStorage.getItem('boxCost') || 0,
+                bubbleCost: localStorage.getItem('bubbleCost') || 0,
+                tapeCost: localStorage.getItem('tapeCost') || 0
             };
             
             const gistData = {
@@ -827,6 +842,9 @@
                 if (cloudData.doubanPrice !== undefined) localStorage.setItem('doubanPrice', cloudData.doubanPrice);
                 if (cloudData.electricityPrice !== undefined) localStorage.setItem('electricityPrice', cloudData.electricityPrice);
                 if (cloudData.packagingCost !== undefined) localStorage.setItem('packagingCost', cloudData.packagingCost);
+                if (cloudData.boxCost !== undefined) localStorage.setItem('boxCost', cloudData.boxCost);
+                if (cloudData.bubbleCost !== undefined) localStorage.setItem('bubbleCost', cloudData.bubbleCost);
+                if (cloudData.tapeCost !== undefined) localStorage.setItem('tapeCost', cloudData.tapeCost);
                 
                 location.reload();
                 alert('从云端下载成功！');
@@ -1140,12 +1158,19 @@
             }
 
             const pack = getNumericValue('packagingCost');
+            const box = getNumericValue('boxCost');
+            const bubble = getNumericValue('bubbleCost');
+            const tape = getNumericValue('tapeCost');
             const ship = getNumericValue('shippingCost');
-            const totalExpense = productCost + pack + ship;
+            const totalPackaging = pack + box + bubble + tape;
+            const totalExpense = productCost + totalPackaging + ship;
 
             getElement('expenseBreakdown').innerHTML = `
                 <div class="expense-item"><span class="expense-label">商品成本:</span><span class="expense-value">${productCost.toFixed(2)}</span></div>
-                <div class="expense-item"><span class="expense-label">打包费:</span><span class="expense-value">${pack.toFixed(2)}</span></div>
+                <div class="expense-item"><span class="expense-label">打包材料:</span><span class="expense-value">${pack.toFixed(2)}</span></div>
+                <div class="expense-item"><span class="expense-label">纸箱/泡沫箱:</span><span class="expense-value">${box.toFixed(2)}</span></div>
+                <div class="expense-item"><span class="expense-label">气泡膜/填充:</span><span class="expense-value">${bubble.toFixed(2)}</span></div>
+                <div class="expense-item"><span class="expense-label">胶带:</span><span class="expense-value">${tape.toFixed(2)}</span></div>
                 <div class="expense-item"><span class="expense-label">运费:</span><span class="expense-value">${ship.toFixed(2)}</span></div>
                 <div class="expense-item total"><span class="expense-label">总支出:</span><span class="expense-value">${totalExpense.toFixed(2)}</span></div>
             `;
@@ -1260,6 +1285,10 @@
             getElement('doubanQuantity').value = localStorage.getItem('doubanQuantity')||0;
             getElement('doubanCost').value = localStorage.getItem('doubanCost')||0;
             getElement('doubanPrice').value = localStorage.getItem('doubanPrice')||0;
+            getElement('packagingCost').value = localStorage.getItem('packagingCost')||0;
+            getElement('boxCost').value = localStorage.getItem('boxCost')||0;
+            getElement('bubbleCost').value = localStorage.getItem('bubbleCost')||0;
+            getElement('tapeCost').value = localStorage.getItem('tapeCost')||0;
 
             initMaterialsList();
             initPrintersList();
@@ -1314,7 +1343,10 @@
                 getElement(id).addEventListener('input',calculateModalCost);
             });
 
-            getElement('packagingCost').addEventListener('input',updateCalculations);
+            getElement('packagingCost').addEventListener('input',()=>{localStorage.setItem('packagingCost',getElement('packagingCost').value);updateCalculations();});
+            getElement('boxCost').addEventListener('input',()=>{localStorage.setItem('boxCost',getElement('boxCost').value);updateCalculations();});
+            getElement('bubbleCost').addEventListener('input',()=>{localStorage.setItem('bubbleCost',getElement('bubbleCost').value);updateCalculations();});
+            getElement('tapeCost').addEventListener('input',()=>{localStorage.setItem('tapeCost',getElement('tapeCost').value);updateCalculations();});
             getElement('electricityPrice').addEventListener('input',updateAllProductCosts);
             getElement('shippingCost').addEventListener('input',updateCalculations);
             getElement('totalSalePrice').addEventListener('input',updateCalculations);
