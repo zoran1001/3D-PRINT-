@@ -578,7 +578,14 @@
                     <input type="number" id="totalSalePrice" value="0" step="0.01" min="0">
                 </div>
                 <div class="form-group">
-                    <label>已选打印商品（点-+调整数量）</label>
+                    <label>添加打印商品</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <select id="productSelect" style="flex: 1; padding: 8px;">
+                            <option value="">-- 选择商品 --</option>
+                        </select>
+                        <input type="number" id="selectedQty" value="1" min="1" style="width: 60px;">
+                        <button type="button" id="addSelectedProduct" class="add-btn">添加</button>
+                    </div>
                     <div id="selectedProductsSummary"></div>
                 </div>
                 <div class="form-group">
@@ -998,6 +1005,9 @@
             const container = getElement('productCards');
             container.innerHTML = '';
             
+            const select = getElement('productSelect');
+            select.innerHTML = '<option value="">-- 选择商品 --</option>';
+            
             products.forEach((product, index) => {
                 const card = document.createElement('div');
                 card.className = 'product-card';
@@ -1008,6 +1018,11 @@
                     <div class="product-name">${product.name}</div>
                     <button class="delete-btn delete-product-btn" type="button">删除</button>
                 `;
+                
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = product.name;
+                select.appendChild(option);
                 
                 card.addEventListener('click', (e) => {
                     if (!e.target.matches('input[type="checkbox"]') && !e.target.matches('.delete-product-btn')) {
@@ -1375,6 +1390,26 @@
             });
 
             getElement('saveOrder').onclick=saveOrder;
+            
+            getElement('addSelectedProduct').addEventListener('click', () => {
+                const select = getElement('productSelect');
+                const qtyInput = getElement('selectedQty');
+                const idx = parseInt(select.value);
+                if (isNaN(idx) || idx < 0) {
+                    alert('请选择商品');
+                    return;
+                }
+                const qty = parseInt(qtyInput.value) || 1;
+                selectedQtyMap[idx] = (selectedQtyMap[idx] || 0) + qty;
+                
+                const products = getProducts();
+                const p = products[idx];
+                const cards = document.querySelectorAll('.product-card');
+                cards[idx].querySelector('.product-checkbox').checked = true;
+                cards[idx].classList.add('selected');
+                
+                updateCalculations();
+            });
         });
     </script>
 </body>
