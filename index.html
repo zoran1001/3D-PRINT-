@@ -627,8 +627,9 @@
                         <th>总售价</th>
                         <th>总支出</th>
                         <th>运费</th>
-                        <th>豆板</th>
-                        <th>打印商品</th>
+                        <th>豆板数量</th>
+                        <th>豆板利润</th>
+                        <th>商品利润</th>
                         <th>总利润</th>
                         <th>操作</th>
                     </tr>
@@ -1052,7 +1053,8 @@
                     <td>${order.totalExpense?.toFixed(2)}</td>
                     <td>${order.shippingCost?.toFixed(2)}</td>
                     <td>${order.doubanQuantity||0}</td>
-                    <td>${productNames}</td>
+                    <td>${(order.doubanProfit||0).toFixed(2)}</td>
+                    <td>${(order.productProfit||0).toFixed(2)}</td>
                     <td>${order.totalProfit?.toFixed(2)}</td>
                     <td><button class="delete-history-btn" type="button">删除</button></td>
                 `;
@@ -1244,6 +1246,17 @@
                 orderProducts.push({...products[idx], quantity:qty});
             });
 
+            const doubanProfit = parseFloat(getElement('doubanProfit').textContent)||0;
+            const doubanTotal = getNumericValue('doubanQuantity') * doubanProfit;
+            
+            let productProfit = 0;
+            orderProducts.forEach(p => {
+                const profit = (p.salePrice - p.cost) * p.quantity;
+                productProfit += profit;
+            });
+            
+            const totalProfit = parseFloat(getElement('totalProfit').textContent);
+
             const order = {
                 time:new Date().toLocaleString(),
                 buyerName:name,
@@ -1251,7 +1264,9 @@
                 shippingCost:getNumericValue('shippingCost'),
                 totalSalePrice:getNumericValue('totalSalePrice'),
                 totalExpense:parseFloat(getElement('totalExpense').textContent),
-                totalProfit:parseFloat(getElement('totalProfit').textContent),
+                doubanProfit:doubanTotal,
+                productProfit:productProfit,
+                totalProfit:totalProfit,
                 doubanQuantity:getNumericValue('doubanQuantity'),
                 products:orderProducts
             };
