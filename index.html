@@ -1244,7 +1244,10 @@
                 orderProducts.push({...products[idx], quantity:qty});
             });
 
-            const doubanTotal = parseFloat(getElement('doubanTotal').textContent)||0;
+            const doubanQty = getNumericValue('doubanQuantity');
+            const doubanCost = getNumericValue('doubanCost');
+            const doubanPrice = getNumericValue('doubanPrice');
+            const doubanTotal = (doubanPrice - doubanCost) * doubanQty;
             
             let productProfit = 0;
             orderProducts.forEach(p => {
